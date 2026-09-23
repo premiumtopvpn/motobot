@@ -718,8 +718,24 @@ async def do_broadcast(m: Message, state: FSMContext):
     await m.answer(f"✅ Отправлено: {ok}\n❌ Ошибок: {fail}", reply_markup=admin_menu_kb())
 
 # ==================== MAIN ====================
+from aiohttp import web
+
+async def health(request):
+    return web.Response(text="OK")
+
+async def start_health_server():
+    app = web.Application()
+    app.router.add_get("/", health)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.getenv("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logging.info(f"Health server started on port {port}")
+
 async def main():
     await init_db()
+    await start_health_server()
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
     await dp.start_polling(bot)
 
